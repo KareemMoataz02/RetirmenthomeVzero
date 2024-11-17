@@ -15,11 +15,11 @@ public class Donation {
     private MongoDatabase database;
     private MongoCollection<Document> donationCollection;
 
-    // Constructor to initialize MongoDB connection
+    // Constructor to initialize MongoDB connection using Singleton
     public Donation() {
-        // MongoDB client connection setup
-        this.mongoClient = MongoClients.create("mongodb://localhost:27017"); // Connection string
-        this.database = mongoClient.getDatabase("retirementHome"); // Database name
+        // Get MongoDatabase instance from Singleton
+        MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+        this.database = Singleton.getInstance().getDatabase(); // Get the database
         this.donationCollection = database.getCollection("donations"); // Collection name
     }
 

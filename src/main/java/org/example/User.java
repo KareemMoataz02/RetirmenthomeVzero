@@ -14,9 +14,8 @@ public class User {
     // Constructor to initialize User object
     public User(int id) {
         this.id = id;
-        mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection string
-        database = mongoClient.getDatabase("retirementHome"); // Use your actual database name
-        userCollection = database.getCollection("users"); // Use the collection that holds user data
+        this.database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+        this.userCollection = database.getCollection("users"); // Collection name for storing user information
 
         // Fetch user data from the database
         Document userDoc = getUserFromDB(id);
@@ -52,26 +51,21 @@ public class User {
         userCollection.updateOne(Filters.eq("id", this.id), new Document("$set", updatedDoc)); // Update user
     }
 
-    // Close the MongoDB connection when done
-    public void close() {
-        mongoClient.close(); // Close the MongoDB client connection after use
-    }
-
-    @Override
-    public String toString() {
-        return "User{id=" + id + ", name='" + name + "'}";
-    }
-
     // Optional: Add a method to create a new user in MongoDB if needed
     public static void createUser(int id, String name) {
-        MongoCollection<Document> userCollection = mongoClient.getDatabase("retirementHome").getCollection("users");
+        MongoCollection<Document> userCollection = Singleton.getInstance().getDatabase().getCollection("users");
         Document newUser = new Document("id", id).append("name", name);
         userCollection.insertOne(newUser);
     }
 
     // Optional: Add a method to delete a user from MongoDB
     public static void deleteUser(int id) {
-        MongoCollection<Document> userCollection = mongoClient.getDatabase("retirementHome").getCollection("users");
+        MongoCollection<Document> userCollection = Singleton.getInstance().getDatabase().getCollection("users");
         userCollection.deleteOne(Filters.eq("id", id));
+    }
+
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", name='" + name + "'}";
     }
 }

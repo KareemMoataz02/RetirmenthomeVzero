@@ -10,12 +10,13 @@ public class MedicalVisit {
     private static final String DATABASE_NAME = "retirementHome";
     private static final String COLLECTION_NAME = "medicalVisits";
     private static MongoCollection<Document> collection;
+    private MongoCollection<Document> medicalVisitCollection;
 
-    static {
+
+    {
         // Establish MongoDB connection
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
-        collection = database.getCollection(COLLECTION_NAME);
+        MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+        this.medicalVisitCollection = database.getCollection("medicalVisits"); // Collection name for medical visits
     }
 
     private String medicalVisitId;  // Changed to String for ObjectId compatibility

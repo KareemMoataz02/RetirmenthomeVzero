@@ -2,13 +2,10 @@ package org.example;
 
 import com.mongodb.client.*;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 public class Donator implements DonationBehavior {
     private String name;
     private DonationBehavior donationBehavior;
-    private MongoClient mongoClient;
-    private MongoDatabase database;
     private MongoCollection<Document> donatorCollection;
 
     // Constructor for Donator
@@ -16,22 +13,15 @@ public class Donator implements DonationBehavior {
         this.name = name;
         this.donationBehavior = new StandardDonation(); // Donator uses StandardDonation behavior
 
-        // Initialize MongoDB connection
-        this.mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection string
-        this.database = mongoClient.getDatabase("retirementHome"); // Database name
+        // Use Singleton to get the MongoDatabase instance
+        MongoDatabase database = Singleton.getInstance().getDatabase();
         this.donatorCollection = database.getCollection("donators"); // Collection name
     }
-
-    // MongoDB integration methods
-
-
 
     // Method to create a new donation in MongoDB and link it to a Donator
     @Override
     public Donation createDonation(String date, double amount, int elderId, int donatorId) {
         // Create the donation using the StandardDonation behavior
-        // Assuming donatorId needs to be generated or passed as a parameter
-        // Create the donation object
         Donation newDonation = donationBehavior.createDonation(date, amount, elderId, donatorId);
 
         // Store Donator information in MongoDB
@@ -40,7 +30,7 @@ public class Donator implements DonationBehavior {
                 .append("date", date)
                 .append("amount", amount)
                 .append("elderId", elderId)
-                .append("donatorId", donatorId); // Fixed syntax error here
+                .append("donatorId", donatorId);
 
         // Insert Donator into the MongoDB donators collection
         donatorCollection.insertOne(donatorDoc);
@@ -86,12 +76,6 @@ public class Donator implements DonationBehavior {
     // Generate a Donator ID (placeholder logic)
     private int generateDonatorId() {
         // Implement your own logic to generate a unique ID for Donator
-        // For now, this can simply return a random number or some business logic.
         return (int) (Math.random() * 10000); // Example: generate random ID
-    }
-
-    // Close MongoDB connection when done
-    public void close() {
-        mongoClient.close(); // Close the MongoDB client connection
     }
 }

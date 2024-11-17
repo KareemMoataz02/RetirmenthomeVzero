@@ -15,12 +15,9 @@ public class Visitor extends User {
     // Constructor to initialize the MongoDB connection and fetch the visitor data
     public Visitor(int id) {
         super(id); // Initialize the User class with visitor ID
-        mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection string
-        database = mongoClient.getDatabase("retirementHome"); // Access the database
-        visitCollection = database.getCollection("normalVisits"); // Collection for normal visits
-        visitorCollection = database.getCollection("visitors"); // Collection for visitors
-
-        // Fetch Visitor's normal visit (if exists) from the database using visitor ID
+        this.database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+        this.visitCollection = database.getCollection("normalVisits") ;
+        this.visitorCollection = database.getCollection("visitors");
         this.normalVisit = fetchNormalVisit(id);
     }
 

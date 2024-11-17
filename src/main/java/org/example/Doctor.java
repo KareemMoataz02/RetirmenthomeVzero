@@ -6,16 +6,13 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Doctor extends User {
-    private MongoClient mongoClient;
-    private MongoDatabase database;
     private MongoCollection<Document> medicalVisitCollection;
     private MongoCollection<Document> doctorCollection;
 
-    // Constructor to initialize MongoDB connection and the User object (Doctor)
+    // Constructor to initialize User object (Doctor)
     public Doctor(int id, String name) {
         super(id); // Initialize User with id and name
-        this.mongoClient = MongoClients.create("mongodb://localhost:27017"); // Adjust the connection string if necessary
-        this.database = mongoClient.getDatabase("retirementHome"); // Replace with your actual database name
+        MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
         this.medicalVisitCollection = database.getCollection("medicalVisits"); // Collection name for medical visits
         this.doctorCollection = database.getCollection("doctors"); // Collection name for storing doctor information
     }
@@ -96,9 +93,9 @@ public class Doctor extends User {
         }
     }
 
-    // Close MongoDB client connection
+    // Close MongoDB client connection (Singleton instance is closed globally)
     public void close() {
-        mongoClient.close();
+        // No need to close the MongoDB client here, as the Singleton manages the connection globally
     }
 
     // Method to display doctor details

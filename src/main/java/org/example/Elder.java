@@ -13,16 +13,17 @@ public class Elder {
     private static MongoClient mongoClient;
     private static MongoCollection<Document> collection;
     private static final Logger logger = Logger.getLogger(Elder.class.getName());
+    private MongoCollection<Document> eldersCollection;
+
 
     // Static block to initialize the MongoDB client and collection
-    static {
+    {
         try {
-            // Establish MongoDB connection
-            mongoClient = MongoClients.create("mongodb://localhost:27017");
-            MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
-            collection = database.getCollection(COLLECTION_NAME);
+            // Get the MongoDB client and database from Singleton
+            MongoDatabase database = Singleton.getInstance().getDatabase();
+            this.eldersCollection = database.getCollection("elders");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error initializing MongoDB connection", e);
+            logger.log(Level.SEVERE, "Error initializing MongoDB collection", e);
         }
     }
 

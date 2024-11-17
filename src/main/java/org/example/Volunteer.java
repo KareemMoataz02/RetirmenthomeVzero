@@ -7,22 +7,20 @@ import org.bson.types.ObjectId;
 
 public class Volunteer {
 
-    private static final String DATABASE_NAME = "retirementHome";
     private static final String RESERVATION_COLLECTION = "volunteerReservations";
     private static final String EVENT_COLLECTION = "events";
     private static final String VOLUNTEER_COLLECTION = "volunteers"; // Add a collection for volunteers
-    private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> reservationCollection;
     private MongoCollection<Document> eventCollection;
     private MongoCollection<Document> volunteerCollection; // Mongo collection for volunteers
     private User volunteer;
 
-    // Constructor initializes MongoDB client, database, and collections
+    // Constructor initializes database and collections using Singleton
     public Volunteer(User volunteer) {
         try {
-            this.mongoClient = MongoClients.create("mongodb://localhost:27017");
-            this.database = mongoClient.getDatabase(DATABASE_NAME);
+            // Use Singleton to get the database
+            this.database = Singleton.getInstance().getDatabase();
             this.reservationCollection = database.getCollection(RESERVATION_COLLECTION);
             this.eventCollection = database.getCollection(EVENT_COLLECTION);
             this.volunteerCollection = database.getCollection(VOLUNTEER_COLLECTION); // Initialize volunteer collection

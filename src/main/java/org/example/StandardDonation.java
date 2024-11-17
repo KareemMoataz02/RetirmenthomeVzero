@@ -10,11 +10,14 @@ public class StandardDonation implements DonationBehavior {
     private MongoDatabase database;
     private MongoCollection<Document> donationCollection;
 
+
     // Constructor to initialize MongoDB connection
     public StandardDonation() {
-        this.mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection string
-        this.database = mongoClient.getDatabase("retirementHome"); // Database name
-        this.donationCollection = database.getCollection("donations"); // Collection name
+        {
+            // Establish MongoDB connection
+            MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+            this.donationCollection = database.getCollection("donations"); // Collection name for medical visits
+        }
     }
 
     @Override

@@ -7,16 +7,14 @@ import org.bson.types.ObjectId;
 
 public class VolunteerReservation {
 
-    private static final String DATABASE_NAME = "retirementHome";
     private static final String COLLECTION_NAME = "volunteerReservations";
     private static MongoCollection<Document> collection;
-    private static MongoClient mongoClient;
-    private static MongoDatabase database;
 
+    // Static block to initialize the MongoDB collection using Singleton
     static {
         try {
-            mongoClient = MongoClients.create("mongodb://localhost:27017");
-            database = mongoClient.getDatabase(DATABASE_NAME);
+            // Get the database from Singleton
+            MongoDatabase database = Singleton.getInstance().getDatabase();
             collection = database.getCollection(COLLECTION_NAME);
 
             // Ensure collection exists, create if it doesn't

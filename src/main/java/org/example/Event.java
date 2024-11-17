@@ -9,12 +9,13 @@ public class Event {
     private static final String DATABASE_NAME = "retirementHome";
     private static final String COLLECTION_NAME = "events";
     private static MongoCollection<Document> collection;
+    private MongoCollection<Document> eventsCollection;
 
-    static {
+
+    {
         // Establish MongoDB connection
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
-        collection = database.getCollection(COLLECTION_NAME);
+        MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
+        this.eventsCollection = database.getCollection("events"); // Collection name for medical visits
     }
 
     private int id;
