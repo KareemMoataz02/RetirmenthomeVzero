@@ -10,99 +10,78 @@ public class Volunteer {
     private static final String DATABASE_NAME = "retirementHome";
     private static final String RESERVATION_COLLECTION = "volunteerReservations";
     private static final String EVENT_COLLECTION = "events";
+    private static final String VOLUNTEER_COLLECTION = "volunteers"; // Add a collection for volunteers
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> reservationCollection;
     private MongoCollection<Document> eventCollection;
+    private MongoCollection<Document> volunteerCollection; // Mongo collection for volunteers
     private User volunteer;
 
     // Constructor initializes MongoDB client, database, and collections
     public Volunteer(User volunteer) {
-        this.mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection
-        this.database = mongoClient.getDatabase(DATABASE_NAME);
-        this.reservationCollection = database.getCollection(RESERVATION_COLLECTION);
-        this.eventCollection = database.getCollection(EVENT_COLLECTION);
-        this.volunteer = volunteer; // Volunteer making the reservation
-    }
-
-    // Make a reservation for a volunteer to an event
-    public VolunteerReservation makeReservation(int eventId) {
         try {
-            // Check if the event exists in the database
-            Document eventDocument = eventCollection.find(Filters.eq("eventId", eventId)).first();
-            if (eventDocument == null) {
-                throw new IllegalArgumentException("Event not found with eventId: " + eventId);
-            }
-
-            // Create reservation document for the volunteer
-            Document reservationDocument = new Document("eventId", eventId)
-                    .append("volunteerId", volunteer.getId()) // Linking the volunteer
-                    .append("status", "Reserved"); // Default status
-
-            // Insert the reservation into the database
-            reservationCollection.insertOne(reservationDocument);
-
-            // Create and return a VolunteerReservation object
-            return new VolunteerReservation(
-                    reservationDocument.getObjectId("_id").toString(),
-                    eventId,
-                    volunteer.getId(),
-                    "Reserved"
-            );
+            this.mongoClient = MongoClients.create("mongodb://localhost:27017");
+            this.database = mongoClient.getDatabase(DATABASE_NAME);
+            this.reservationCollection = database.getCollection(RESERVATION_COLLECTION);
+            this.eventCollection = database.getCollection(EVENT_COLLECTION);
+            this.volunteerCollection = database.getCollection(VOLUNTEER_COLLECTION); // Initialize volunteer collection
+            this.volunteer = volunteer;
         } catch (Exception e) {
-            System.err.println("Error while making reservation: " + e.getMessage());
+            System.err.println("Error initializing MongoDB: " + e.getMessage());
             e.printStackTrace();
-            return null;
         }
     }
 
-    // Retrieve a reservation by reservationId
-    public VolunteerReservation getReservation(int reservationId) {
+    // Create a volunteer and store in the database
+    public boolean createVolunteer(String name, int age) {
         try {
-            // Find reservation document using reservationId
-            Document reservationDocument = reservationCollection.find(Filters.eq("_id", new ObjectId(String.valueOf(reservationId)))).first();
-            if (reservationDocument != null) {
-                // Return a VolunteerReservation object populated from the document
-                return new VolunteerReservation(
-                        reservationDocument.getObjectId("_id").toString(),
-                        reservationDocument.getInteger("eventId"),
-                        reservationDocument.getInteger("volunteerId"),
-                        reservationDocument.getString("status")
-                );
-            }
-            return null; // If not found, return null
-        } catch (Exception e) {
-            System.err.println("Error while retrieving reservation: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
+            String volunteerId = new ObjectId().toString(); // Generate a unique volunteer ID
+            Document volunteerDoc = new Document("id", volunteerId)
+                    .append("name", name)
+                    .append("age", age);
 
-    // Cancel a reservation by reservationId
-    public boolean cancelReservation(int reservationId) {
-        try {
-            // Find the reservation and update its status to "Cancelled"
-            Document result = reservationCollection.findOneAndUpdate(
-                    Filters.eq("_id", new ObjectId(String.valueOf(reservationId))),
-                    new Document("$set", new Document("status", "Cancelled"))
-            );
-            return result != null; // Return true if the reservation was updated, false otherwise
+            volunteerCollection.insertOne(volunteerDoc);
+            System.out.println("Volunteer added to database: " + volunteerDoc);
+            return true;
         } catch (Exception e) {
-            System.err.println("Error while cancelling reservation: " + e.getMessage());
+            System.err.println("Error creating volunteer: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Close the MongoDB client connection
-    public void close() {
+    // Volunteer makes a reservation for an event
+    public boolean makeReservation(int eventId) {
         try {
-            if (mongoClient != null) {
-                mongoClient.close();
+            Document eventDoc = eventCollection.find(Filters.eq("id", eventId)).first();
+            if (eventDoc != null) {
+                String reservationId = new ObjectId().toString();
+                Document reservationDoc = new Document("id", reservationId)
+                        .append("volunteerId", this.volunteer.getId())
+                        .append("eventId", eventId)
+                        .append("status", "Pending");
+
+                reservationCollection.insertOne(reservationDoc);
+                return true;
             }
+            return false; // Event not found
         } catch (Exception e) {
-            System.err.println("Error closing MongoDB client: " + e.getMessage());
+            System.err.println("Error making reservation: " + e.getMessage());
             e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Cancel a reservation
+    public boolean cancelReservation(String reservationId) {
+        try {
+            reservationCollection.deleteOne(Filters.eq("id", reservationId));
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error canceling reservation: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 }

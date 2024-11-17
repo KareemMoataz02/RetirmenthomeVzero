@@ -1,83 +1,91 @@
 package org.example;
 
 import com.mongodb.client.*;
-import org.bson.Document;
 import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 public class VolunteerReservation {
 
     private static final String DATABASE_NAME = "retirementHome";
     private static final String COLLECTION_NAME = "volunteerReservations";
     private static MongoCollection<Document> collection;
+    private static MongoClient mongoClient;
+    private static MongoDatabase database;
 
     static {
-        // Establish MongoDB connection
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
-        MongoDatabase database = mongoClient.getDatabase(DATABASE_NAME);
+        try {
+            mongoClient = MongoClients.create("mongodb://localhost:27017");
+            database = mongoClient.getDatabase(DATABASE_NAME);
+            collection = database.getCollection(COLLECTION_NAME);
 
-        // Create collection if it doesn't exist
-        if (!database.listCollectionNames().into(new java.util.ArrayList<>()).contains(COLLECTION_NAME)) {
-            database.createCollection(COLLECTION_NAME);
-            System.out.println("Collection 'volunteerReservations' created successfully.");
+            // Ensure collection exists, create if it doesn't
+            if (!database.listCollectionNames().into(new java.util.ArrayList<>()).contains(COLLECTION_NAME)) {
+                database.createCollection(COLLECTION_NAME);
+                System.out.println("Collection 'volunteerReservations' created successfully.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        // Get the volunteerReservations collection
-        collection = database.getCollection(COLLECTION_NAME);
     }
 
-    private String id;  // Changed id to String
-    private int volunteerId;
-    private int eventId;
-    private String status; // New status field
+    private String id;  // ID of the reservation
+    private int volunteerId; // Volunteer ID
+    private int eventId; // Event ID
+    private String status; // Status of the reservation
 
     // Constructor
     public VolunteerReservation(String id, int volunteerId, int eventId, String status) {
-        this.id = id;  // Set id as String
+        this.id = id;
         this.volunteerId = volunteerId;
         this.eventId = eventId;
-        this.status = status; // Set status
+        this.status = status;
     }
 
     // Create a new volunteer reservation with a default status (e.g., "Pending")
     public static boolean create(int volunteerId, int eventId) {
         try {
-            String id = java.util.UUID.randomUUID().toString();  // Generate a random UUID as id
-            Document document = new Document("id", id)  // Use id as String
+            String id = new ObjectId().toString();
+            Document document = new Document("id", id)
                     .append("volunteerId", volunteerId)
                     .append("eventId", eventId)
-                    .append("status", "Pending"); // Default status
+                    .append("status", "Pending");
             collection.insertOne(document);
             return true;
         } catch (Exception e) {
+            System.err.println("Error creating reservation: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Get a volunteer reservation by id
-    public static VolunteerReservation get(String id) {
+    // Get a volunteer reservation by ID
+    public static VolunteerReservation getId(String id) {
         try {
             Document doc = collection.find(Filters.eq("id", id)).first();
             if (doc != null) {
-                return new VolunteerReservation(doc.getString("id"),
+                return new VolunteerReservation(
+                        doc.getString("id"),
                         doc.getInteger("volunteerId"),
                         doc.getInteger("eventId"),
-                        doc.getString("status")); // Retrieve status as well
-            } else {
-                return null; // Not found
+                        doc.getString("status")
+                );
             }
+            return null;
         } catch (Exception e) {
+            System.err.println("Error retrieving reservation: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
 
-    // Remove a volunteer reservation by id
+    // Remove a volunteer reservation by ID
     public static boolean remove(String id) {
         try {
             collection.deleteOne(Filters.eq("id", id));
             return true;
         } catch (Exception e) {
+            System.err.println("Error removing reservation: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -86,12 +94,12 @@ public class VolunteerReservation {
     // Update the status of a volunteer reservation
     public boolean updateStatus(String newStatus) {
         try {
-            // Update the status field in the database
             Document updateDoc = new Document("$set", new Document("status", newStatus));
             collection.updateOne(Filters.eq("id", this.id), updateDoc);
-            this.status = newStatus; // Update the status in the object as well
+            this.status = newStatus;
             return true;
         } catch (Exception e) {
+            System.err.println("Error updating reservation status: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -105,31 +113,5 @@ public class VolunteerReservation {
                 ", eventId=" + eventId +
                 ", status='" + status + '\'' +
                 '}';
-    }
-
-    public static void main(String[] args) {
-        // Test the functionality
-        // Create a new volunteer reservation
-        boolean created = VolunteerReservation.create(101, 202);
-        System.out.println("Created VolunteerReservation: " + created);
-
-        // Retrieve a volunteer reservation by ID
-        VolunteerReservation reservation = VolunteerReservation.get("some-unique-id"); // Replace with actual id
-        if (reservation != null) {
-            System.out.println("Retrieved VolunteerReservation: " + reservation);
-        } else {
-            System.out.println("VolunteerReservation not found");
-        }
-
-        // Update the reservation status
-        if (reservation != null) {
-            boolean statusUpdated = reservation.updateStatus("Confirmed");
-            System.out.println("Updated status: " + statusUpdated);
-            System.out.println("Updated VolunteerReservation: " + reservation);
-        }
-
-        // Remove a volunteer reservation by ID
-        boolean removed = VolunteerReservation.remove("some-unique-id"); // Replace with actual id
-        System.out.println("Removed VolunteerReservation: " + removed);
     }
 }

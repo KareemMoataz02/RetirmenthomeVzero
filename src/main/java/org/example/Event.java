@@ -21,7 +21,7 @@ public class Event {
     private String name;
     private String date;
     private String description;
-    private Observer[] observers;
+    private Observer[] observers; // Placeholder for observer management
 
     // Constructor
     public Event(int id, String name, String date, String description) {
@@ -34,7 +34,7 @@ public class Event {
 
     // Getters and setters
     public int getId() {
-        return id;
+        return id; // Fixed method
     }
 
     public void setId(int id) {
@@ -123,7 +123,6 @@ public class Event {
     }
 
     // Observer Pattern Methods
-
     public void registerObserver(Observer observer) {
         // Add observer to the list
     }

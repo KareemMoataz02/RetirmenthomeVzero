@@ -10,6 +10,7 @@ public class Visitor extends User {
     private static MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> visitCollection;
+    private MongoCollection<Document> visitorCollection;
 
     // Constructor to initialize the MongoDB connection and fetch the visitor data
     public Visitor(int id) {
@@ -17,9 +18,22 @@ public class Visitor extends User {
         mongoClient = MongoClients.create("mongodb://localhost:27017"); // MongoDB connection string
         database = mongoClient.getDatabase("retirementHome"); // Access the database
         visitCollection = database.getCollection("normalVisits"); // Collection for normal visits
+        visitorCollection = database.getCollection("visitors"); // Collection for visitors
 
         // Fetch Visitor's normal visit (if exists) from the database using visitor ID
         this.normalVisit = fetchNormalVisit(id);
+    }
+
+    // Create a new visitor and save it to the database
+    public void createVisitor(int id, String name, int age) {
+        // Create a new document for the visitor
+        Document visitorDoc = new Document("id", id)
+                .append("name", name)
+                .append("age", age);
+
+        // Insert the visitor into the visitor collection
+        visitorCollection.insertOne(visitorDoc);
+        System.out.println("New visitor created: " + name);
     }
 
     // Fetch Visitor's normal visit details from the database using their ID
@@ -33,7 +47,7 @@ public class Visitor extends User {
                     doc.getInteger("elderId"),
                     doc.getInteger("visitorId"),
                     doc.getString("visitStatus")
-                    );
+            );
         }
         return null; // Return null if no visit found
     }
