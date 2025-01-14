@@ -7,6 +7,7 @@ public class MoneyDonationReceiptAdapter implements IReceiptGenerator {
                 "Donation ID: " + donation.getDonationId() + "\n" +
                 "Amount: " + donation.getAmount() + " " + donation.getType() + "\n" +
                 "Donator ID: " + donation.getDonatorId() + "\n" +
-                "Date: " + donation.getDate() + "\n";
+                "Date: " + donation.getDate() + "\n" +
+                "Status: " + donation.getStatus() + "\n";
     }
 }

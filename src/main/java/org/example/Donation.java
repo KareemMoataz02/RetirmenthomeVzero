@@ -6,29 +6,16 @@ import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-public class Donation {
-    private String donationId;
+public class Donation extends DonationContext {
     private String date;
     private double amount;
     private int elderId;
     private int donatorId;
     private String type;
-    private static MongoCollection<Document> donationCollection;
-
-    // Static block to initialize MongoDB connection
-    static {
-        try {
-            MongoDatabase database = Singleton.getInstance().getDatabase();
-            donationCollection = database.getCollection("donations");
-        } catch (Exception e) {
-            System.err.println("Error initializing MongoDB connection: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 
     // Constructor
-    public Donation(String donationId, String date, double amount, int elderId, int donatorId, String type) {
-        this.donationId = donationId;
+    public Donation(String donationId, String date, double amount, int elderId, int donatorId, String type, String status) {
+        super(donationId, status);
         this.date = date;
         this.amount = amount;
         this.elderId = elderId;
@@ -36,7 +23,7 @@ public class Donation {
         this.type = type;
     }
 
-    // Getter methods
+    // Getters
     public String getDonationId() {
         return donationId;
     }
@@ -61,46 +48,41 @@ public class Donation {
         return type;
     }
 
-    // Create a donation
+    public String getStatus() {
+        return currentState instanceof RejectedState ? "Rejected" :
+                currentState instanceof CompletedState ? "Completed" :
+                        currentState instanceof ProcessingState ? "Processing" :
+                                "PendingApproval";
+    }
+
+    // Method to set Rejected State
+    public void setRejectedState() {
+        System.out.println("Donation state set to Rejected.");
+        setState(new RejectedState());
+        updateStatusInDatabase("Rejected");
+    }
+
+    // Additional CRUD Operations
     public static Donation createDonation(String date, double amount, int elderId, int donatorId, String type) {
+        String id = new ObjectId().toString();
+        Donation donation = new Donation(id, date, amount, elderId, donatorId, type, "PendingApproval");
+        // Insert donation into the database
         try {
-            Document donationDoc = new Document()
+            Document doc = new Document("_id", new ObjectId(id))
                     .append("date", date)
                     .append("amount", amount)
                     .append("elderId", elderId)
                     .append("donatorId", donatorId)
-                    .append("type", type);
-
-            donationCollection.insertOne(donationDoc);
-            String donationId = donationDoc.getObjectId("_id").toString();
-
-            return new Donation(donationId, date, amount, elderId, donatorId, type);
+                    .append("type", type)
+                    .append("status", "PendingApproval");
+            donationCollection.insertOne(doc);
+            return donation;
         } catch (Exception e) {
             System.err.println("Error creating donation: " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
     }
 
-    // Update a donation
-    public static boolean updateDonation(String donationId, String date, double amount, int elderId, String type) {
-        try {
-            Document updateDoc = new Document("$set", new Document()
-                    .append("date", date)
-                    .append("amount", amount)
-                    .append("elderId", elderId)
-                    .append("type", type));
-
-            donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), updateDoc);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error updating donation: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Retrieve a donation
     public static Donation getDonation(String donationId) {
         try {
             Document doc = donationCollection.find(Filters.eq("_id", new ObjectId(donationId))).first();
@@ -111,32 +93,55 @@ public class Donation {
                         doc.getDouble("amount"),
                         doc.getInteger("elderId"),
                         doc.getInteger("donatorId"),
-                        doc.getString("type")
+                        doc.getString("type"),
+                        doc.getString("status")
                 );
             }
         } catch (Exception e) {
             System.err.println("Error retrieving donation: " + e.getMessage());
-            e.printStackTrace();
         }
         return null;
     }
 
-    // Cancel a donation
+    public static Donation updateDonation(String donationId, String date, double amount, int elderId, String type) {
+        try {
+            Document updateDoc = new Document("$set", new Document("date", date)
+                    .append("amount", amount)
+                    .append("elderId", elderId)
+                    .append("type", type));
+            donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), updateDoc);
+            return getDonation(donationId);
+        } catch (Exception e) {
+            System.err.println("Error updating donation: " + e.getMessage());
+        }
+        return null;
+    }
+
     public static boolean cancelDonation(String donationId) {
         try {
-            var result = donationCollection.deleteOne(Filters.eq("_id", new ObjectId(donationId)));
-            return result.getDeletedCount() > 0;
+            donationCollection.deleteOne(Filters.eq("_id", new ObjectId(donationId)));
+            return true;
         } catch (Exception e) {
-            System.err.println("Error canceling donation: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error cancelling donation: " + e.getMessage());
             return false;
         }
     }
 
+    // Ensure the collection is accessible
+    public static MongoCollection<Document> getDonationCollection() {
+        return donationCollection;
+    }
+
     @Override
     public String toString() {
-        return "Donation ID: " + donationId + ", Date: " + date + ", Amount: " + amount +
-                ", Elder ID: " + elderId + ", Donator ID: " + donatorId +
-                (type != null ? ", Type: " + type : "");
+        return "Donation{" +
+                "donationId='" + donationId + '\'' +
+                ", date='" + date + '\'' +
+                ", amount=" + amount +
+                ", elderId=" + elderId +
+                ", donatorId=" + donatorId +
+                ", type='" + type + '\'' +
+                ", status='" + getStatus() + '\'' +
+                '}';
     }
 }

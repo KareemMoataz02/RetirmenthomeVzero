@@ -8,6 +8,7 @@ public class MedicineDonationReceiptAdapter implements IReceiptGenerator {
                 "Medicine Type: " + donation.getType() + "\n" +
                 "Amount: " + donation.getAmount() + " units\n" +
                 "Donator ID: " + donation.getDonatorId() + "\n" +
-                "Date: " + donation.getDate() + "\n";
+                "Date: " + donation.getDate() + "\n" +
+                "Status: " + donation.getStatus() + "\n";
     }
 }

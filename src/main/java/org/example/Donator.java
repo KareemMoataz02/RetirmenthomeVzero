@@ -12,7 +12,6 @@ public class Donator implements DonationBehavior {
     // Constructor for Donator
     public Donator(String name) {
         this.name = name;
-        this.donationBehavior = new StandardDonation(); // Donator uses StandardDonation behavior
 
         // Use Singleton to get the MongoDatabase instance
         MongoDatabase database = Singleton.getInstance().getDatabase();
