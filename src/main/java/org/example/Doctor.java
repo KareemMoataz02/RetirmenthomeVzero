@@ -5,7 +5,7 @@ import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-public class Doctor extends User {
+public class Doctor extends User implements Observer {
     private MongoCollection<Document> medicalVisitCollection;
     private MongoCollection<Document> doctorCollection;
 
@@ -93,9 +93,11 @@ public class Doctor extends User {
         }
     }
 
-    // Close MongoDB client connection (Singleton instance is closed globally)
-    public void close() {
-        // No need to close the MongoDB client here, as the Singleton manages the connection globally
+    // Observer pattern implementation
+    @Override
+    public void update(String eventDetails) {
+        // Handle event notification
+        System.out.println("Doctor " + getName() + " received notification: " + eventDetails);
     }
 
     // Method to display doctor details
