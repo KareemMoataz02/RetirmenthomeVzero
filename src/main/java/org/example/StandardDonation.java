@@ -24,14 +24,14 @@ public class StandardDonation implements DonationBehavior {
     }
 
     @Override
-    public Donation createDonation(String date, double amount, int elderId, int donatorId) {
+    public Donation createDonation(String date, double amount, int elderId, int donatorId, String type) {
         try {
             // Create a MongoDB document for the donation
             Document donationDocument = new Document("date", date)
                     .append("amount", amount)
+                    .append("type", type) // Include type parameter
                     .append("elderId", elderId)
-                    .append("donatorId", donatorId)
-                    .append("medicineType", null); // Explicitly set medicineType to null for standard donations
+                    .append("donatorId", donatorId);
 
             // Insert the donation into MongoDB
             donationCollection.insertOne(donationDocument);
@@ -46,7 +46,7 @@ public class StandardDonation implements DonationBehavior {
                     amount,
                     elderId,
                     donatorId,
-                    null // medicineType is null for standard donations
+                    type
             );
         } catch (Exception e) {
             System.err.println("Error creating standard donation: " + e.getMessage());
@@ -56,7 +56,7 @@ public class StandardDonation implements DonationBehavior {
     }
 
     @Override
-    public Donation updateDonation(String donationId, String date, double amount, int elderId) {
+    public Donation updateDonation(String donationId, String date, double amount, int elderId, String type) {
         try {
             // Build the update document with provided fields
             Document updateDoc = new Document();
@@ -68,6 +68,9 @@ public class StandardDonation implements DonationBehavior {
             }
             if (elderId > 0) { // Ensure elderId is valid
                 updateDoc.append("elderId", elderId);
+            }
+            if (type != null && !type.isEmpty()) {
+                updateDoc.append("type", type);
             }
 
             // Apply the update using $set
@@ -128,7 +131,7 @@ public class StandardDonation implements DonationBehavior {
                         document.getDouble("amount"),
                         document.getInteger("elderId"),
                         document.getInteger("donatorId"),
-                        document.getString("medicineType") // This will be null
+                        document.getString("type")
                 );
             } else {
                 System.err.println("No donation found with ID: " + donationId);
@@ -140,6 +143,4 @@ public class StandardDonation implements DonationBehavior {
             return null;
         }
     }
-
-    // Removed the close() method as Singleton manages the MongoDB connection
 }
