@@ -23,10 +23,12 @@ public class MoneyDonation implements DonationBehavior {
                 .append("amount", amount)
                 .append("elderId", elderId)
                 .append("donatorId", donatorId);
+        // Explicitly set medicineType to null for money donations
+        donationDocument.append("medicineType", null);
 
         donationCollection.insertOne(donationDocument);
         ObjectId id = donationDocument.getObjectId("_id");
-        return new Donation(id.toString(), date, amount, elderId, donatorId);
+        return new Donation(id.toString(), date, amount, elderId, donatorId, null);
     }
 
     // Implement updateDonation method to update an existing donation in MongoDB
@@ -35,10 +37,12 @@ public class MoneyDonation implements DonationBehavior {
         Document updateDocument = new Document("$set", new Document()
                 .append("date", date)
                 .append("amount", amount)
-                .append("elderId", elderId));
+                .append("elderId", elderId)
+                // Ensure that medicineType remains null or is explicitly set to null
+                .append("medicineType", null));
 
         donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), updateDocument);
-        return new Donation(donationId, date, amount, elderId, -1); // Assuming donatorId remains unchanged
+        return new Donation(donationId, date, amount, elderId, -1, null); // donatorId remains unchanged or set appropriately
     }
 
     // Implement cancelDonation method to delete a donation from MongoDB

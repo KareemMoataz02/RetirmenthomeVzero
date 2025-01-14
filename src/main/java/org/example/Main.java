@@ -27,7 +27,9 @@ public class Main {
 
         // Step 4: Create Donations
         System.out.println("Creating Donations...");
-        Donation medDonation1 = medicineDonationBehavior.createDonation("2025-01-15", 50.0, 101, 1001 , "Pain Killers");
+        // For MedicineDonation, medicineType is set internally (e.g., "Pain Killers")
+        Donation medDonation1 = medicineDonationBehavior.createDonation("2025-01-15", 50.0, 101, 1001);
+        // For MoneyDonation, medicineType is implicitly null
         Donation moneyDonation1 = moneyDonationBehavior.createDonation("2025-01-16", 200.0, 102, 1002);
 
         // Step 5: Generate Receipts
@@ -40,8 +42,20 @@ public class Main {
 
         // Step 6: Update Donations
         System.out.println("\nUpdating Donations...");
-        Donation updatedMedDonation = medicineDonationBehavior.updateDonation(medDonation1.getDonationId(), "2025-01-20", 75.0, 101);
-        Donation updatedMoneyDonation = moneyDonationBehavior.updateDonation(moneyDonation1.getDonationId(), "2025-01-21", 250.0, 102);
+        // Updating Medicine Donation (medicineType remains unchanged)
+        Donation updatedMedDonation = medicineDonationBehavior.updateDonation(
+                medDonation1.getDonationId(),
+                "2025-01-20",
+                75.0,
+                101
+        );
+        // Updating Money Donation
+        Donation updatedMoneyDonation = moneyDonationBehavior.updateDonation(
+                moneyDonation1.getDonationId(),
+                "2025-01-21",
+                250.0,
+                102
+        );
 
         // Step 7: Generate Updated Receipts
         System.out.println("\nGenerating Updated Receipts...");
@@ -61,6 +75,7 @@ public class Main {
 
         // Step 9: Generate Receipts for Cancelled Donations
         System.out.println("\nGenerating Receipts for Cancelled Donations...");
+        // Assuming that generating a receipt for a cancelled donation still shows the original details
         String cancelledMedReceipt = medicineReceiptGenerator.generateReceipt(medDonation1);
         String cancelledMoneyReceipt = moneyReceiptGenerator.generateReceipt(moneyDonation1);
 
@@ -121,7 +136,12 @@ public class Main {
 
         // Step 15: Update an Event
         System.out.println("\nUpdating Event with ID 101...");
-        boolean updateStatus = eventManager.updateEvent(101, "Health Checkup", "2025-01-20", "Updated details for the health checkup.");
+        boolean updateStatus = eventManager.updateEvent(
+                101,
+                "Health Checkup",
+                "2025-01-20",
+                "Updated details for the health checkup."
+        );
         if (updateStatus) {
             System.out.println("Event updated successfully.");
         } else {

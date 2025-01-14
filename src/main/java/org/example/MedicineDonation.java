@@ -4,6 +4,7 @@ import org.bson.Document;  // Assuming MongoDB is used
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.types.ObjectId;
+import com.mongodb.client.model.Filters;
 
 public class MedicineDonation implements DonationBehavior {
     private MongoCollection<Document> donationCollection;
@@ -22,11 +23,11 @@ public class MedicineDonation implements DonationBehavior {
                 .append("amount", amount)
                 .append("elderId", elderId)
                 .append("donatorId", donatorId)
-                .append("medicineType", "Generic"); // Default or could be a parameter
+                .append("medicineType", "pain killers"); // Set to specific medicine type
 
         donationCollection.insertOne(donationDocument);
         ObjectId id = donationDocument.getObjectId("_id");
-        return new Donation(id.toString(), date, amount, elderId, donatorId);
+        return new Donation(id.toString(), date, amount, elderId, donatorId, "pain killers");
     }
 
     // Update an existing donation record in the database
@@ -35,10 +36,12 @@ public class MedicineDonation implements DonationBehavior {
         Document updateDocument = new Document("$set", new Document()
                 .append("date", date)
                 .append("amount", amount)
-                .append("elderId", elderId));
+                .append("elderId", elderId)
+                // Ensure that medicineType remains unchanged or can be updated if needed
+                .append("medicineType", "pain killers")); // Assuming medicineType remains the same
 
-        donationCollection.updateOne(new Document("_id", new ObjectId(donationId)), updateDocument);
-        return new Donation(donationId, date, amount, elderId, -1);  // donatorId not updated, pass as -1 or fetch if needed
+        donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), updateDocument);
+        return new Donation(donationId, date, amount, elderId, -1, "pain killers");  // donatorId not updated, pass as -1 or fetch if needed
     }
 
     // Cancel (delete) a donation record from the database
