@@ -1,18 +1,18 @@
-package asu.eng.models;
+package org.example;
 
-public class WithVAT extends DonationReceipt {
-    private DonationReceipt donationReceipt;
-    private static final double VAT_RATE = 0.15; // Example VAT rate of 15%
+public class WithVAT extends ReceiptDecorator {
+    private double vatRate;
 
-    public WithVAT(DonationReceipt donationReceipt) {
-        super(donationReceipt.getAmount());
-        this.donationReceipt = donationReceipt;
+    public WithVAT(IReceiptGenerator receipt, double vatRate) {
+        super(receipt);
+        this.vatRate = vatRate;
     }
 
     @Override
-    public int addValue() {
-        // Add VAT to the donation amount
-        int vat = (int) (donationReceipt.getAmount() * VAT_RATE);
-        return donationReceipt.addValue() + vat;
+    public String generateReceipt(Donation donation) {
+        String receipt = decoratedReceipt.generateReceipt(donation);
+        double vatAmount = donation.getAmount() * vatRate;
+        double newTotal = donation.getAmount() + vatAmount;
+        return receipt + String.format("\nIncluding VAT (%.0f%%): %.2f (New Total: %.2f)", vatRate * 100, vatAmount, newTotal);
     }
 }
