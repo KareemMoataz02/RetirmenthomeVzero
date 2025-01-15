@@ -9,13 +9,16 @@ public class MoneyDonation implements DonationBehavior {
 
     @Override
     public Donation createDonation(String date, double amount, int elderId, int donatorId, String type) {
-        // Delegate to the `MoneyCreate` class
         return moneyCreate.createDonation(date, amount, elderId, donatorId, type);
     }
 
     @Override
     public Donation updateDonation(String donationId, String date, double amount, int elderId, String type) {
-        return Donation.updateDonation(donationId, date, amount, elderId, type);
+        Donation updatedDonation = Donation.updateDonation(donationId, date, amount, elderId, type);
+        if (updatedDonation != null) {
+            moneyCreate.updateCurrencyTotals(amount, type);
+        }
+        return updatedDonation;
     }
 
     @Override
