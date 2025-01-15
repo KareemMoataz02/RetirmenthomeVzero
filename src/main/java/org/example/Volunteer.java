@@ -126,3 +126,4 @@ public class Volunteer implements Observer {
         System.out.println("Volunteer " + volunteer.getName() + " received event update: " + eventDetails);
     }
 }
+

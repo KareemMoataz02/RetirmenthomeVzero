@@ -1,38 +1,28 @@
 package org.example;
 
-import com.mongodb.client.*;
-import org.bson.Document;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 
-public class Donation {
-    private String donationId;
+public class Donation extends DonationContext {
     private String date;
     private double amount;
     private int elderId;
     private int donatorId;
-    private MongoClient mongoClient;
-    private MongoDatabase database;
-    private MongoCollection<Document> donationCollection;
+    private String type;
 
-    // Constructor to initialize MongoDB connection using Singleton
-    public Donation() {
-        // Get MongoDatabase instance from Singleton
-        MongoDatabase database = Singleton.getInstance().getDatabase(); // Get the database using Singleton
-        this.database = Singleton.getInstance().getDatabase(); // Get the database
-        this.donationCollection = database.getCollection("donations"); // Collection name
-    }
-
-    // Constructor to create Donation object from fields
-    public Donation(String donationId, String date, double amount, int elderId, int donatorId) {
-        this.donationId = donationId;
+    // Constructor
+    public Donation(String donationId, String date, double amount, int elderId, int donatorId, String type, String status) {
+        super(donationId, status);
         this.date = date;
         this.amount = amount;
         this.elderId = elderId;
         this.donatorId = donatorId;
+        this.type = type;
     }
 
-    // Getter methods
+    // Getters
     public String getDonationId() {
         return donationId;
     }
@@ -53,74 +43,102 @@ public class Donation {
         return donatorId;
     }
 
-    @Override
-    public String toString() {
-        return "Donation ID: " + donationId + ", Date: " + date + ", Amount: " + amount;
+    public String getType() {
+        return type;
     }
 
-    // MongoDB operations:
-
-    // Method to create a new donation in the MongoDB database
-    public Donation createDonation(String date, double amount, int elderId, int donatorId) {
-        // Create a MongoDB document for donation
-        Document donationDoc = new Document("date", date)
-                .append("amount", amount)
-                .append("elderId", elderId)
-                .append("donatorId", donatorId);
-
-        // Insert the document into MongoDB collection
-        donationCollection.insertOne(donationDoc);
-
-        // After inserting, retrieve the generated _id to set the donationId
-        String donationId = donationDoc.getObjectId("_id").toString();
-
-        // Return a new Donation object created with the inserted data
-        return new Donation(donationId, date, amount, elderId, donatorId);
+    public String getStatus() {
+        return currentState instanceof RejectedState ? "Rejected" :
+                currentState instanceof CompletedState ? "Completed" :
+                        currentState instanceof ProcessingState ? "Processing" :
+                                "PendingApproval";
     }
 
-    // Method to update an existing donation in MongoDB
-    public boolean updateDonation(String donationId, String date, double amount, int elderId) {
-        // Create the updated data for the donation
-        Document updateDoc = new Document("date", date)
-                .append("amount", amount)
-                .append("elderId", elderId);
+    // Static CRUD Operations for Donations
 
-        // Update the donation in the MongoDB collection
-        donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), new Document("$set", updateDoc));
-
-        return true;
-    }
-
-    // Method to delete a donation from MongoDB
-    public boolean cancelDonation(String donationId) {
-        // Delete the donation from the collection
-        donationCollection.deleteOne(Filters.eq("_id", new ObjectId(donationId)));
-
-        return true;
-    }
-
-    // Method to retrieve a donation from MongoDB by its donationId
-    public Donation getDonation(String donationId) {
-        // Retrieve the donation document by donationId (_id)
-        Document doc = donationCollection.find(Filters.eq("_id", new ObjectId(donationId))).first();
-
-        if (doc != null) {
-            // Create a Donation object from the MongoDB document and return it
-            return new Donation(
-                    doc.getObjectId("_id").toString(),
-                    doc.getString("date"),
-                    doc.getDouble("amount"),
-                    doc.getInteger("elderId"),
-                    doc.getInteger("donatorId")
-            );
-        } else {
-            // Return null if the donation is not found
+    // Create a new donation
+    public static Donation createDonation(String date, double amount, int elderId, int donatorId, String type) {
+        String id = new ObjectId().toString();
+        Donation donation = new Donation(id, date, amount, elderId, donatorId, type, "PendingApproval");
+        // Insert donation into the database
+        try {
+            Document doc = new Document("_id", new ObjectId(id))
+                    .append("date", date)
+                    .append("amount", amount)
+                    .append("elderId", elderId)
+                    .append("donatorId", donatorId)
+                    .append("type", type)
+                    .append("status", "PendingApproval");
+            donationCollection.insertOne(doc);
+            return donation;
+        } catch (Exception e) {
+            System.err.println("Error creating donation: " + e.getMessage());
             return null;
         }
     }
 
-    // Close MongoDB connection when done
-    public void close() {
-        mongoClient.close(); // Close the MongoDB client connection
+    // Retrieve an existing donation
+    public static Donation getDonation(String donationId) {
+        try {
+            Document doc = donationCollection.find(Filters.eq("_id", new ObjectId(donationId))).first();
+            if (doc != null) {
+                return new Donation(
+                        doc.getObjectId("_id").toString(),
+                        doc.getString("date"),
+                        doc.getDouble("amount"),
+                        doc.getInteger("elderId"),
+                        doc.getInteger("donatorId"),
+                        doc.getString("type"),
+                        doc.getString("status")
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Error retrieving donation: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Update an existing donation
+    public static Donation updateDonation(String donationId, String date, double amount, int elderId, String type) {
+        try {
+            Document updateDoc = new Document("$set", new Document("date", date)
+                    .append("amount", amount)
+                    .append("elderId", elderId)
+                    .append("type", type));
+            donationCollection.updateOne(Filters.eq("_id", new ObjectId(donationId)), updateDoc);
+            return getDonation(donationId);
+        } catch (Exception e) {
+            System.err.println("Error updating donation: " + e.getMessage());
+        }
+        return null;
+    }
+
+    // Cancel an existing donation
+    public static boolean cancelDonation(String donationId) {
+        try {
+            donationCollection.deleteOne(Filters.eq("_id", new ObjectId(donationId)));
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error cancelling donation: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Ensure the collection is accessible
+    public static MongoCollection<Document> getDonationCollection() {
+        return donationCollection;
+    }
+
+    @Override
+    public String toString() {
+        return "Donation{" +
+                "donationId='" + donationId + '\'' +
+                ", date='" + date + '\'' +
+                ", amount=" + amount +
+                ", elderId=" + elderId +
+                ", donatorId=" + donatorId +
+                ", type='" + type + '\'' +
+                ", status='" + getStatus() + '\'' +
+                '}';
     }
 }
