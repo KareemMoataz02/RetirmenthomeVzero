@@ -8,9 +8,9 @@ public class MoneyDonation implements DonationBehavior {
     }
 
     @Override
-    public void createDonation(String date, double amount, int elderId, int donatorId, String type) {
-        // Delegate creation to the template method
-        moneyCreate.createDonation(date, amount, elderId, donatorId, type);
+    public Donation createDonation(String date, double amount, int elderId, int donatorId, String type) {
+        // Delegate to the `MoneyCreate` class
+        return moneyCreate.createDonation(date, amount, elderId, donatorId, type);
     }
 
     @Override

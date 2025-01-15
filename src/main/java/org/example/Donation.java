@@ -54,6 +54,13 @@ public class Donation extends DonationContext {
                                 "PendingApproval";
     }
 
+    // Method to set Rejected State
+    public void setRejectedState() {
+        System.out.println("Donation state set to Rejected.");
+        setState(new RejectedState());
+        updateStatusInDatabase("Rejected");
+    }
+
     // Static CRUD Operations for Donations
 
     // Create a new donation
